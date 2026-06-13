@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ALIKKER WARS v1.0</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+  :root{--green:#39ff14;--green-dim:#1a7a06;--green-dark:#0d3d03;--amber:#ffb300;--red:#ff2200;--bg:#050f02;--border:#1f6b09}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:14px;min-height:100vh;padding:10px;overflow-x:hidden}
+  body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.15) 2px,rgba(0,0,0,.15) 4px);pointer-events:none;z-index:1000}
+  @keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.85}94%{opacity:1}}
+  body{animation:flicker 8s infinite}
+  .screen{max-width:920px;margin:0 auto;border:2px solid var(--border);padding:8px;box-shadow:0 0 30px rgba(57,255,20,.15),inset 0 0 20px rgba(0,0,0,.5)}
+  .title-bar{text-align:center;border-bottom:1px solid var(--border);padding:6px 0;margin-bottom:8px}
+  .ascii-title{font-family:'VT323',monospace;font-size:30px;color:var(--amber);text-shadow:0 0 10px var(--amber);letter-spacing:4px;display:block}
+  .sub-title{color:var(--green-dim);font-size:11px;letter-spacing:2px;margin-top:3px}
+  .status-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:8px}
+  .stat-box{border:1px solid var(--border);padding:4px 6px;text-align:center;background:var(--green-dark)}
+  .stat-label{font-size:10px;color:var(--green-dim)}
+  .stat-value{font-size:17px;color:var(--green);font-family:'VT323',monospace}
+  .stat-value.money{color:var(--amber)}
+  .sheriff-bar{display:flex;align-items:center;gap:8px;border:1px solid var(--red);padding:4px 8px;margin-bottom:8px;background:rgba(255,34,0,.05)}
+  .heat-bar{flex:1;height:12px;background:var(--green-dark);border:1px solid var(--border)}
+  .heat-fill{height:100%;background:linear-gradient(to right,#ff6600,var(--red));transition:width .5s}
+  .sheriff-label{color:var(--red);font-size:11px;white-space:nowrap}
+  .msg-log{height:120px;overflow-y:auto;border:1px solid var(--green-dark);padding:6px;background:#010a00;margin-bottom:8px;font-size:12px;scrollbar-width:thin;scrollbar-color:var(--green-dim) var(--bg)}
+  .msg-log p{margin-bottom:2px;line-height:1.4}
+  .msg-warn{color:var(--amber)}.msg-danger{color:var(--red)}.msg-good{color:#7fff00}.msg-normal{color:var(--green-dim)}
+  .main-grid{display:grid;grid-template-columns:1fr 210px;gap:8px}
+  .panel{border:1px solid var(--border);padding:8px;background:rgba(0,10,0,.6)}
+  .panel-title{color:var(--amber);font-family:'VT323',monospace;font-size:18px;border-bottom:1px solid var(--border);margin-bottom:6px;padding-bottom:2px;text-shadow:0 0 6px var(--amber)}
+  .tabs{display:flex;gap:2px;margin-bottom:8px;flex-wrap:wrap}
+  .tab-btn{background:var(--green-dark);border:1px solid var(--green-dim);color:var(--green-dim);font-family:'Share Tech Mono',monospace;font-size:12px;padding:4px 8px;cursor:pointer;text-transform:uppercase;transition:all .1s}
+  .tab-btn:hover,.tab-btn.active{background:var(--green-dim);color:#000;border-color:var(--green)}
+  .tab-content{display:none}.tab-content.active{display:block}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th{color:var(--amber);text-align:left;padding:3px 6px;border-bottom:1px solid var(--border);font-size:11px;font-weight:normal}
+  td{padding:3px 6px;border-bottom:1px solid var(--green-dark)}
+  tr:hover td{background:rgba(57,255,20,.05)}
+  .price-up{color:#7fff00}.price-down{color:var(--red)}.price-normal{color:var(--green)}
+  .btn{background:transparent;border:1px solid var(--green-dim);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:11px;padding:3px 8px;cursor:pointer;text-transform:uppercase;transition:all .1s}
+  .btn:hover{background:var(--green-dim);color:#000}
+  .btn-buy{border-color:#7fff00;color:#7fff00}.btn-buy:hover{background:#7fff00;color:#000}
+  .btn-sell{border-color:var(--amber);color:var(--amber)}.btn-sell:hover{background:var(--amber);color:#000}
+  .btn-action{border-color:var(--amber);color:var(--amber);padding:5px 12px;font-size:12px}.btn-action:hover{background:var(--amber);color:#000}
+  .btn-danger{border-color:var(--red);color:var(--red)}.btn-danger:hover{background:var(--red);color:#fff}
+  .qty-input{background:#010a00;border:1px solid var(--green-dim);color:var(--green);font-family:'Share Tech Mono',monospace;font-size:12px;width:52px;padding:2px 4px;text-align:right}
+  .inventory-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--green-dark);padding:3px 0;font-size:12px}
+  .inv-name{color:var(--green-dim)}.inv-qty{color:var(--green)}
+  .mash-slot{border:1px solid var(--border);padding:6px;margin-bottom:6px;background:#010a00;font-size:12px}
+  .mash-slot-title{color:var(--amber);font-size:13px;margin-bottom:4px}
+  .progress-bar{height:10px;background:var(--green-dark);border:1px solid var(--border);margin:4px 0}
+  .progress-fill{height:100%;background:var(--green);transition:width .3s}
+  .progress-fill.ready{background:var(--amber)}
+  .location-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .location-card{border:1px solid var(--border);padding:8px;cursor:pointer;background:#010a00;transition:all .15s}
+  .location-card:hover{border-color:var(--amber);background:rgba(255,179,0,.05)}
+  .location-card.current{border-color:var(--green)}
+  .loc-name{color:var(--amber);font-family:'VT323',monospace;font-size:16px}
+  .loc-detail{color:var(--green-dim);font-size:11px;margin-top:2px}
+  .loc-heat{color:var(--red);font-size:11px}
+  .still-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .still-card{border:1px solid var(--border);padding:8px;cursor:pointer;background:#010a00;text-align:center;transition:all .15s}
+  .still-card:hover{border-color:var(--green)}
+  .still-card.selected{border-color:var(--amber);box-shadow:0 0 8px rgba(255,179,0,.3)}
+  .still-card.locked{opacity:.4;cursor:not-allowed}
+  .still-ascii{font-size:22px;display:block;margin-bottom:4px}
+  .still-name{color:var(--amber);font-family:'VT323',monospace;font-size:15px}
+  .still-info{font-size:10px;color:var(--green-dim);margin-top:2px}
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;align-items:center;justify-content:center}
+  .modal-overlay.show{display:flex}
+  .modal-box{border:2px solid var(--amber);background:#050f02;padding:24px;max-width:420px;width:90%;text-align:center;box-shadow:0 0 40px rgba(255,179,0,.3)}
+  .modal-title{font-family:'VT323',monospace;font-size:28px;color:var(--amber);margin-bottom:12px}
+  .modal-text{color:var(--green);font-size:13px;margin-bottom:16px;line-height:1.7}
+  .modal-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .day-btn{width:100%;padding:8px;margin-top:4px;font-size:15px;font-family:'VT323',monospace;letter-spacing:2px;border:1px solid var(--amber);background:transparent;color:var(--amber);cursor:pointer;text-transform:uppercase;transition:all .1s}
+  .day-btn:hover{background:var(--amber);color:#000;box-shadow:0 0 12px var(--amber)}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+  .blink{animation:blink 1s infinite}
+  .row-actions{display:flex;align-items:center;gap:4px}
+  .separator{border:none;border-top:1px solid var(--green-dark);margin:6px 0}
+  ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--green-dim)}
+  @media(max-width:650px){.main-grid{grid-template-columns:1fr}.still-grid{grid-template-columns:1fr 1fr}.status-bar{grid-template-columns:repeat(2,1fr)}.location-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="screen">
+  <div class="title-bar">
+    <span class="ascii-title">⚗ LIKKER WARS ⚗</span>
+    <div class="sub-title">══════════ SMOKY MOUNTAINS, 1976 ══════════</div>
+  </div>
+
+  <div class="status-bar">
+    <div class="stat-box"><div class="stat-label">$$ CASH $$</div><div class="stat-value money" id="cash-display">$500</div></div>
+    <div class="stat-box"><div class="stat-label">TAG NR.</div><div class="stat-value" id="day-display">1 / 30</div></div>
+    <div class="stat-box"><div class="stat-label">STANDORT</div><div class="stat-value" id="location-display" style="font-size:12px">Harlan Holler</div></div>
+    <div class="stat-box"><div class="stat-label">MOONSHINE (Gal.)</div><div class="stat-value" id="shine-display">0</div></div>
+  </div>
+
+  <div class="sheriff-bar">
+    <span class="sheriff-label">🔴 SHERIFF-HITZE:</span>
+    <div class="heat-bar"><div class="heat-fill" id="heat-fill" style="width:5%"></div></div>
+    <span class="sheriff-label" id="heat-label">RUHIG</span>
+  </div>
+
+  <div class="msg-log" id="msg-log">
+    <p class="msg-warn">*** LIKKER WARS  v1.0 — 30 TAGE UM REICH ZU WERDEN ***</p>
+    <p class="msg-normal">Du bist Marvin "Popcorn" Sutton, eine Legende der Moonshiner . Naja noch nicht du hast 30 Tage dafür ..</p>
+    <p class="msg-normal">Kauf Früchte, setz Maische an, brenn Schnaps und verkauf ihn – ohne den Sheriff zu wecken.</p>
+    <p class="msg-warn">Viel Glück, Junge. Die Deputys schlafen nie.</p>
+  </div>
+
+  <div class="main-grid">
+    <div>
+      <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('market',this)">[ MARKT ]</button>
+        <button class="tab-btn" onclick="switchTab('mash',this)">[ MAISCHE ]</button>
+        <button class="tab-btn" onclick="switchTab('still',this)">[ BRENNEREI ]</button>
+        <button class="tab-btn" onclick="switchTab('travel',this)">[ REISEN ]</button>
+        <button class="tab-btn" onclick="switchTab('sell',this)">[ VERKAUF ]</button>
+      </div>
+
+```
+  <!-- MARKET -->
+  <div class="tab-content active" id="tab-market">
+    <div class="panel">
+      <div class="panel-title">▶ FRÜCHTE &amp; ZUTATEN — <span id="market-location">Harlan Holler</span></div>
+      <table><thead><tr><th>WARE</th><th>PREIS</th><th>TREND</th><th>LAGER</th><th>AKTION</th></tr></thead>
+      <tbody id="market-body"></tbody></table>
+      <hr class="separator">
+      <div style="font-size:11px;color:var(--green-dim)">Lagerkapazität: <span id="cap-display">0</span> / <span id="cap-max">100</span> Einheiten</div>
+    </div>
+  </div>
+
+  <!-- MASH -->
+  <div class="tab-content" id="tab-mash">
+    <div class="panel">
+      <div class="panel-title">▶ MAISCHE ANSETZEN</div>
+      <div style="margin-bottom:10px;font-size:12px;color:var(--green-dim)">Wähle ein Rezept, kontrolliere deine Zutaten und setz eine Charge an. Fermentierungszeit: 2–5 Tage.</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+        <div><div style="color:var(--amber);font-size:12px;margin-bottom:4px">REZEPT WÄHLEN:</div><div id="recipe-list"></div></div>
+        <div><div style="color:var(--amber);font-size:12px;margin-bottom:4px">DETAILS:</div><div id="recipe-info" style="font-size:12px;color:var(--green-dim);line-height:1.8"></div>
+        <button class="btn btn-action" onclick="startMash()" style="margin-top:8px">▶ MAISCHE ANSETZEN</button></div>
+      </div>
+      <div style="color:var(--amber);font-size:13px;margin-bottom:6px;font-family:'VT323',monospace">AKTIVE FÄSSER:</div>
+      <div id="mash-slots"></div>
+    </div>
+  </div>
+
+  <!-- STILL -->
+  <div class="tab-content" id="tab-still">
+    <div class="panel">
+      <div class="panel-title">▶ BRENNANLAGE</div>
+      <div style="font-size:12px;color:var(--green-dim);margin-bottom:8px">Bessere Anlagen = mehr Ausbeute, aber mehr Rauch und Lärm. Klicke eine gesperrte Anlage um sie zu kaufen.</div>
+      <div class="still-grid" id="still-grid"></div>
+      <hr class="separator">
+      <div style="color:var(--amber);font-size:13px;font-family:'VT323',monospace;margin-bottom:6px">FERTIGE MAISCHE BRENNEN:</div>
+      <div id="ready-mash-list" style="font-size:12px"></div>
+      <button class="btn btn-action" onclick="runStill()" style="margin-top:8px">🔥 BRENNEN STARTEN</button>
+    </div>
+  </div>
+
+  <!-- TRAVEL -->
+  <div class="tab-content" id="tab-travel">
+    <div class="panel">
+      <div class="panel-title">▶ LOCATION WECHSELN</div>
+      <div style="font-size:12px;color:var(--green-dim);margin-bottom:8px">Jede Reise kostet 1 Tag und erhöht die Hitze leicht. Jede Location hat andere Einkauf- und Verkaufspreise.</div>
+      <div class="location-grid" id="location-grid"></div>
+    </div>
+  </div>
+
+  <!-- SELL -->
+  <div class="tab-content" id="tab-sell">
+    <div class="panel">
+      <div class="panel-title">▶ MOONSHINE VERKAUFEN</div>
+      <div id="sell-content" style="font-size:12px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<div>
+  <div class="panel" style="margin-bottom:8px">
+    <div class="panel-title">▶ LAGER</div>
+    <div id="inventory-display"></div>
+  </div>
+  <div class="panel" style="margin-bottom:8px">
+    <div class="panel-title">▶ AUSRÜSTUNG</div>
+    <div id="equipment-display" style="font-size:11px;color:var(--green-dim)"></div>
+  </div>
+  <button class="day-btn" onclick="endDay()">═══ TAG BEENDEN ═══</button>
+</div>
+```
+
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-text" id="modal-text"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+
+<script>
+const G={cash:500,day:1,maxDays:30,heat:5,location:0,inventory:{},mashFermenting:[],readyMash:[],shine:0,still:0,selectedRecipe:null};
+let marketPrices={};
+
+const LOCATIONS=[
+  {name:"Cocke Country",state:"KY",desc:"Kleines Tal, wenig Kontrollen",buyMod:1.0,sellMod:0.9,heatMod:1,baseSell:18},
+  {name:"Pikeville",state:"KY",desc:"Marktstadt, gute Einkaufspreise",buyMod:1.1,sellMod:1.1,heatMod:1.4,baseSell:22},
+  {name:"Grundy Hollow",state:"VA",desc:"Abgelegen, billige Früchte",buyMod:0.85,sellMod:0.8,heatMod:0.8,baseSell:16},
+  {name:"Boone City",state:"NC",desc:"Touristengegend, hohe Preise",buyMod:1.2,sellMod:1.3,heatMod:1.6,baseSell:28},
+  {name:"Clinch River Bend",state:"TN",desc:"Flusstal, Schmuggler-Route",buyMod:0.9,sellMod:1.0,heatMod:1.1,baseSell:20},
+  {name:"Maggie Valley",state:"VA",desc:"Bergdorf, ruhige Sheriffsleute",buyMod:1.0,sellMod:0.95,heatMod:0.7,baseSell:17},
+];
+
+const ITEMS=[
+  {id:"peach",name:"Pfirsiche",base:8,emoji:"🍑",desc:"Süß, klassisch"},
+  {id:"apple",name:"Äpfel",base:5,emoji:"🍎",desc:"Mild, viel Ausbeute"},
+  {id:"corn",name:"Mais",base:3,emoji:"🌽",desc:"Basis für Moonshine"},
+  {id:"grape",name:"Trauben",base:12,emoji:"🍇",desc:"Premium, selten"},
+  {id:"plum",name:"Pflaumen",base:10,emoji:"🫐",desc:"Fruchtig, beliebt"},
+  {id:"sugar",name:"Zucker (kg)",base:4,emoji:"🍬",desc:"Erhöht Ausbeute"},
+  {id:"yeast",name:"Hefe (Pkg.)",base:6,emoji:"🧫",desc:"Beschleunigt Gärung"},
+];
+
+const RECIPES=[
+  {id:"corn_mash",name:"Corn Mash",ingredients:{corn:20,yeast:2},quality:1.0,days:3,baseGal:4},
+  {id:"apple_jack",name:"Apple Jack",ingredients:{apple:15,sugar:5,yeast:1},quality:1.2,days:3,baseGal:5},
+  {id:"peach_moon",name:"Georgia Peach",ingredients:{peach:12,sugar:3,yeast:1},quality:1.5,days:4,baseGal:4},
+  {id:"grape_moon",name:"Mountain Grape",ingredients:{grape:10,yeast:2},quality:1.8,days:5,baseGal:3},
+  {id:"plum_brandy",name:"Plum Brandy",ingredients:{plum:12,sugar:4,yeast:1},quality:1.6,days:4,baseGal:4},
+  {id:"sugar_shine",name:"Sugar Shine",ingredients:{sugar:20,yeast:3},quality:0.8,days:2,baseGal:6},
+];
+
+const STILLS=[
+  {name:"Ofen-Pot",emoji:"🪣",desc:"Uralt, aus Opa's Scheune",yield:1.0,risk:0,cost:0,unlocked:true},
+  {name:"Copper-Pot",emoji:"⚗️",desc:"Kupferkessel, solide",yield:1.3,risk:5,cost:200,unlocked:false},
+  {name:"Column-Still",emoji:"🏭",desc:"Profi-Anlage",yield:1.7,risk:15,cost:600,unlocked:false},
+];
+
+const SHERIFF_EVENTS=[
+  {minHeat:25,text:"Der Deputy fährt durch denn Wald. Du machst das Licht aus.",fine:0,shine:0},
+  {minHeat:40,text:"Roadblock! Du schaffst es durch die Berge.",fine:60,shine:0},
+  {minHeat:55,text:"Razzia! Sheriff Jackson findet dein Versteck!",fine:180,shine:10},
+  {minHeat:72,text:"Die Revenuers durchsuchen alles!",fine:320,shine:25},
+  {minHeat:88,text:"VERHAFTET! Du zahlst dich frei...",fine:500,shine:0,jailDay:2},
+];
+
+const RANDOM_EVENTS=[
+  {w:8,fn:g=>{const b=Math.floor(Math.random()*100+50);g.cash+=b;return`🐷 Onkel Zeb verkauft sein Schwein. Du kriegst $${b}.`}},
+  {w:6,fn:g=>{g.heat=Math.max(0,g.heat-18);return`🌫️ Dichter Nebel. Der Sheriff bleibt zuhause.`}},
+  {w:5,fn:g=>{g.heat+=22;return`📻 Ein Nachbar hat dich verpfiffen! Hitze +22.`}},
+  {w:4,fn:g=>{const l=Math.floor(g.shine*.2);g.shine=Math.max(0,g.shine-l);return`🐍 Schlange im Lager! ${l} Gal. verschwunden.`}},
+  {w:6,fn:g=>`☀️ Schönes Wetter. Guter Tag zum Brennen.`},
+  {w:4,fn:g=>{g.heat+=12;return`🚁 Regierungshubschrauber kreist über dem Tal.`}},
+  {w:3,fn:g=>{Object.keys(g.inventory).forEach(k=>g.inventory[k]=Math.floor(g.inventory[k]*.85));return`🌧️ Starkregen – 15% Vorräte verdorben.`}},
+  {w:5,fn:g=>`🦅 Ruhige Nacht in den Appalachen.`},
+  {w:3,fn:g=>{const b=Math.floor(Math.random()*80+40);g.cash+=b;return`🎶 Du spielst Banjo beim County-Fair. $${b} Trinkgeld.`}},
+];
+
+function initGame(){
+  ITEMS.forEach(it=>G.inventory[it.id]=0);
+  generatePrices();
+  renderAll();
+}
+
+function generatePrices(){
+  const loc=LOCATIONS[G.location];
+  ITEMS.forEach(it=>{
+    const prev=marketPrices[it.id]||it.base;
+    const change=(Math.random()-.45)*.4;
+    marketPrices[it.id]=Math.max(1,Math.round(prev*(1+change)*loc.buyMod));
+  });
+}
+
+function renderAll(){renderStatus();renderMarket();renderInventory();renderMash();renderStill();renderLocations();renderSell();renderEquipment();}
+
+function renderStatus(){
+  const loc=LOCATIONS[G.location];
+  document.getElementById('cash-display').textContent='$'+G.cash;
+  document.getElementById('day-display').textContent=G.day+' / '+G.maxDays;
+  document.getElementById('location-display').textContent=loc.name;
+  document.getElementById('shine-display').textContent=G.shine.toFixed(1);
+  document.getElementById('market-location').textContent=loc.name;
+  const heat=Math.min(100,G.heat);
+  document.getElementById('heat-fill').style.width=heat+'%';
+  const labels=['RUHIG','UNRUHIG','GEFÄHRLICH','KRITISCH!'];
+  const idx=heat<25?0:heat<50?1:heat<75?2:3;
+  document.getElementById('heat-label').textContent=labels[idx];
+  const totalInv=Object.values(G.inventory).reduce((a,b)=>a+b,0);
+  document.getElementById('cap-display').textContent=totalInv;
+}
+
+function renderMarket(){
+  const tbody=document.getElementById('market-body');
+  tbody.innerHTML='';
+  ITEMS.forEach(it=>{
+    const p=marketPrices[it.id];
+    const cls=p>it.base?'price-up':p<it.base?'price-down':'price-normal';
+    const arrow=p>it.base?'▲':p<it.base?'▼':'–';
+    const qty=G.inventory[it.id]||0;
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${it.emoji} ${it.name}</td><td class="${cls}">$${p}</td><td class="${cls}">${arrow}</td><td>${qty}</td><td><div class="row-actions"><input class="qty-input" id="qty-${it.id}" type="number" value="1" min="1" max="999"><button class="btn btn-buy" onclick="buyItem('${it.id}')">KAUF</button><button class="btn btn-sell" onclick="sellItemRaw('${it.id}')">VERK</button></div></td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+function renderInventory(){
+  let html='',hasAny=false;
+  ITEMS.forEach(it=>{const qty=G.inventory[it.id]||0;if(qty>0){hasAny=true;html+=`<div class="inventory-row"><span class="inv-name">${it.emoji} ${it.name}</span><span class="inv-qty">${qty}</span></div>`;}});
+  if(G.shine>0)html+=`<div class="inventory-row"><span class="inv-name">🥃 Moonshine</span><span class="inv-qty" style="color:var(--amber)">${G.shine.toFixed(1)} gal</span></div>`;
+  if(!hasAny&&G.shine==0)html='<div style="color:var(--green-dark);font-size:11px">Lager leer.</div>';
+  document.getElementById('inventory-display').innerHTML=html;
+}
+
+function renderEquipment(){
+  const s=STILLS[G.still];
+  document.getElementById('equipment-display').innerHTML=`<div style="margin-bottom:4px">${s.emoji} <span style="color:var(--amber)">${s.name}</span></div><div>Ausbeute: x${s.yield.toFixed(1)}</div><div>Risiko: +${s.risk}%</div><hr class="separator"><div>Fässer: ${G.mashFermenting.length} aktiv</div><div>Fertig: ${G.readyMash.length}</div>`;
+}
+
+function renderMash(){
+  const el=document.getElementById('recipe-list');
+  el.innerHTML='';
+  RECIPES.forEach(r=>{
+    const sel=G.selectedRecipe===r.id;
+    const d=document.createElement('div');
+    d.style.cssText=`border:1px solid ${sel?'var(--amber)':'var(--border)'};padding:4px 6px;margin-bottom:4px;cursor:pointer;background:${sel?'rgba(255,179,0,.08)':'#010a00'};font-size:12px`;
+    d.innerHTML=`<span style="color:${sel?'var(--amber)':'var(--green)'}">${r.name}</span>`;
+    d.onclick=()=>{G.selectedRecipe=r.id;renderMash();};
+    el.appendChild(d);
+  });
+  const infoEl=document.getElementById('recipe-info');
+  if(G.selectedRecipe){
+    const r=RECIPES.find(x=>x.id===G.selectedRecipe);
+    const lines=Object.entries(r.ingredients).map(([k,v])=>{const it=ITEMS.find(i=>i.id===k);const have=G.inventory[k]||0;return`<span style="color:${have>=v?'var(--green)':'var(--red)'}">${it.emoji} ${it.name}: ${v} (Lager: ${have})</span>`;}).join('<br>');
+    infoEl.innerHTML=`${lines}<br><span style="color:var(--green-dim)">Qualität: x${r.quality} | Tage: ${r.days} | ~${r.baseGal} Gal.</span>`;
+  } else {infoEl.innerHTML='<span style="color:var(--green-dark)">Kein Rezept gewählt.</span>';}
+  const slotsEl=document.getElementById('mash-slots');
+  if(G.mashFermenting.length===0&&G.readyMash.length===0){slotsEl.innerHTML='<div style="color:var(--green-dark);font-size:12px">Keine aktiven Fässer.</div>';return;}
+  slotsEl.innerHTML='';
+  G.mashFermenting.forEach((m,i)=>{const r=RECIPES.find(x=>x.id===m.recipe);const pct=Math.round((1-m.daysLeft/r.days)*100);const d=document.createElement('div');d.className='mash-slot';d.innerHTML=`<div class="mash-slot-title">🪣 Fass ${i+1}: ${r.name}</div><div>Fertig in: <b>${m.daysLeft}</b> Tag(en)</div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div><div style="color:var(--green-dim)">~${m.gallons.toFixed(1)} Gal. erwartet</div>`;slotsEl.appendChild(d);});
+  G.readyMash.forEach(m=>{const r=RECIPES.find(x=>x.id===m.recipe);const d=document.createElement('div');d.className='mash-slot';d.innerHTML=`<div class="mash-slot-title" style="color:#7fff00">✅ FERTIG: ${r.name} <span class="blink">◉</span></div><div style="color:#7fff00">Bereit zum Brennen! ${m.gallons.toFixed(1)} Gal.</div><div class="progress-bar"><div class="progress-fill ready" style="width:100%"></div></div>`;slotsEl.appendChild(d);});
+}
+
+function renderStill(){
+  const grid=document.getElementById('still-grid');
+  grid.innerHTML='';
+  STILLS.forEach((s,i)=>{
+    const unlocked=s.unlocked||G.still>=i;
+    const d=document.createElement('div');
+    d.className=`still-card${!unlocked?' locked':''}${G.still===i?' selected':''}`;
+    d.innerHTML=`<span class="still-ascii">${s.emoji}</span><div class="still-name">${s.name}</div><div class="still-info">Ausbeute: x${s.yield}</div><div class="still-info">Risiko: +${s.risk}%</div><div class="still-info" style="color:var(--amber)">${unlocked?(G.still===i?'✓ AKTIV':'Auswählen'):'$'+s.cost+' kaufen'}</div>`;
+    d.onclick=()=>unlocked?selectStill(i,s):buyStill(i,s);
+    grid.appendChild(d);
+  });
+  const readyEl=document.getElementById('ready-mash-list');
+  readyEl.innerHTML=G.readyMash.length===0?'<div style="color:var(--green-dark)">Keine fertige Maische.</div>':G.readyMash.map(m=>{const r=RECIPES.find(x=>x.id===m.recipe);return`<div style="color:#7fff00">✅ ${r.name}: ${m.gallons.toFixed(1)} Gal.</div>`;}).join('');
+}
+
+function renderLocations(){
+  const grid=document.getElementById('location-grid');
+  grid.innerHTML='';
+  LOCATIONS.forEach((l,i)=>{
+    const isCurrent=G.location===i;
+    const d=document.createElement('div');
+    d.className=`location-card${isCurrent?' current':''}`;
+    d.innerHTML=`<div class="loc-name">${l.name}, ${l.state}</div><div class="loc-detail">${l.desc}</div><div class="loc-detail">Einkauf x${l.buyMod.toFixed(2)} | Verkauf x${l.sellMod.toFixed(2)}</div><div class="loc-heat">Polizei: ${'★'.repeat(Math.round(l.heatMod))}</div><div style="margin-top:4px">${isCurrent?'<span style="color:var(--green)">◉ AKTUELL</span>':`<button class="btn btn-action" onclick="travel(${i})">REISEN →</button>`}</div>`;
+    grid.appendChild(d);
+  });
+}
+
+function renderSell(){
+  const loc=LOCATIONS[G.location];
+  const el=document.getElementById('sell-content');
+  if(G.shine<=0){el.innerHTML='<div style="color:var(--green-dark)">Kein Moonshine. Erst brennen!</div>';return;}
+  const pricePerGal=Math.round(loc.baseSell*loc.sellMod);
+  el.innerHTML=`<div style="margin-bottom:8px;line-height:1.8"><div>Moonshine: <span style="color:var(--amber)">${G.shine.toFixed(1)} Gallonen</span></div><div>Preis in ${loc.name}: <span style="color:var(--amber)">$${pricePerGal}/Gal.</span></div><div style="color:var(--green-dim)">Gesamtwert: ~$${Math.round(G.shine*pricePerGal)}</div></div><div class="row-actions" style="margin-bottom:8px"><input class="qty-input" id="sell-qty" type="number" value="${Math.floor(G.shine)}" min="1" max="${Math.floor(G.shine)}" style="width:70px"><span style="color:var(--green-dim)">Gallonen</span><button class="btn btn-action" onclick="sellShine()">VERKAUFEN</button><button class="btn btn-sell" onclick="sellAllShine()">ALLES VERKAUFEN</button></div><hr class="separator"><div style="color:var(--green-dim);font-size:11px"><div>🤝 Bobby Ray (Bootlegger) — zahlt gut, aber riskant (+8 Hitze)</div><div>🍺 Marty's Bar — zahlt fair, eher sicher (+3 Hitze)</div></div>`;
+}
+
+function buyItem(id){
+  const qty=parseInt(document.getElementById('qty-'+id).value)||1;
+  const it=ITEMS.find(i=>i.id===id);
+  const total=marketPrices[id]*qty;
+  const curInv=Object.values(G.inventory).reduce((a,b)=>a+b,0);
+  if(total>G.cash){log(`Nicht genug Cash! Brauchst $${total}.`,'danger');return;}
+  if(curInv+qty>100){log('Lager voll! Max 100 Einheiten.','danger');return;}
+  G.cash-=total;G.inventory[id]=(G.inventory[id]||0)+qty;
+  log(`Gekauft: ${qty}x ${it.name} für $${total}`,'good');renderAll();
+}
+
+function sellItemRaw(id){
+  const qty=parseInt(document.getElementById('qty-'+id).value)||1;
+  const it=ITEMS.find(i=>i.id===id);
+  if((G.inventory[id]||0)<qty){log(`Nicht genug ${it.name}!`,'danger');return;}
+  const total=Math.round(marketPrices[id]*.7*qty);
+  G.cash+=total;G.inventory[id]-=qty;
+  log(`Rückverkauft: ${qty}x ${it.name} für $${total} (70%)`,'normal');renderAll();
+}
+
+function startMash(){
+  if(!G.selectedRecipe){log('Kein Rezept gewählt!','danger');return;}
+  const r=RECIPES.find(x=>x.id===G.selectedRecipe);
+  for(const[k,v]of Object.entries(r.ingredients)){if((G.inventory[k]||0)<v){const it=ITEMS.find(i=>i.id===k);log(`Nicht genug ${it.name}! Brauche ${v}.`,'danger');return;}}
+  if(G.mashFermenting.length>=3){log('Max 3 Fässer gleichzeitig!','danger');return;}
+  for(const[k,v]of Object.entries(r.ingredients))G.inventory[k]-=v;
+  const s=STILLS[G.still];
+  const gallons=r.baseGal*r.quality*s.yield;
+  G.mashFermenting.push({recipe:r.id,daysLeft:r.days,gallons});
+  log(`Maische angesetzt: ${r.name}. Fertig in ${r.days} Tagen. ~${gallons.toFixed(1)} Gal.`,'good');renderAll();
+}
+
+function runStill(){
+  if(G.readyMash.length===0){log('Keine fertige Maische!','danger');return;}
+  const s=STILLS[G.still];
+  let total=0;G.readyMash.forEach(m=>total+=m.gallons);
+  G.shine+=total;G.readyMash=[];G.heat=Math.min(100,G.heat+s.risk+3);
+  log(`🔥 Fertig! +${total.toFixed(1)} Gal. Moonshine. Hitze +${s.risk+3}.`,'good');renderAll();
+}
+
+function travel(idx){
+  const loc=LOCATIONS[idx];
+  G.location=idx;G.heat=Math.min(100,G.heat+loc.heatMod*3);
+  log(`Gereist nach ${loc.name}.`,'warn');
+  endDay(true);
+}
+
+function selectStill(i){G.still=i;log(`Brennanlage: ${STILLS[i].name}`,'normal');renderAll();}
+
+function buyStill(i,s){
+  if(G.cash<s.cost){log(`Zu teuer! ${s.name} kostet $${s.cost}.`,'danger');return;}
+  showModal(`${s.emoji} ${s.name} KAUFEN?`,`Preis: $${s.cost}\nAusbeute: x${s.yield} | Risiko: +${s.risk}%\n\nKaufen?`,[
+    {label:'JA KAUFEN',fn:()=>{G.cash-=s.cost;G.still=i;STILLS[i].unlocked=true;log(`Gekauft: ${s.name}!`,'good');renderAll();}},
+    {label:'ABBRECHEN',fn:()=>{}}
+  ]);
+}
+
+function sellShine(){
+  const qty=parseFloat(document.getElementById('sell-qty').value)||0;
+  if(qty<=0||qty>G.shine){log('Ungültige Menge!','danger');return;}
+  const loc=LOCATIONS[G.location];
+  const total=Math.round(qty*loc.baseSell*loc.sellMod);
+  G.cash+=total;G.shine=Math.max(0,G.shine-qty);G.heat=Math.min(100,G.heat+5);
+  log(`💰 Verkauft: ${qty.toFixed(1)} Gal. für $${total}. Hitze +5.`,'good');renderAll();
+}
+
+function sellAllShine(){
+  if(G.shine<=0)return;
+  const loc=LOCATIONS[G.location];
+  const total=Math.round(G.shine*loc.baseSell*loc.sellMod);
+  G.cash+=total;G.heat=Math.min(100,G.heat+8);
+  log(`💰 Alles verkauft: ${G.shine.toFixed(1)} Gal. für $${total}. Hitze +8.`,'good');
+  G.shine=0;renderAll();
+}
+
+function endDay(fromTravel=false){
+  G.day++;
+  if(G.day>G.maxDays){gameEnd();return;}
+  G.mashFermenting=G.mashFermenting.filter(m=>{
+    m.daysLeft--;
+    if(m.daysLeft<=0){G.readyMash.push({recipe:m.recipe,gallons:m.gallons});const r=RECIPES.find(x=>x.id===m.recipe);log(`🪣 Maische fertig: ${r.name}!`,'good');return false;}
+    return true;
+  });
+  G.heat=Math.max(0,G.heat-(3+Math.random()*4));
+  const heatRoll=G.heat+(Math.random()*20-10);
+  let sheriffEvent=null;
+  for(let i=SHERIFF_EVENTS.length-1;i>=0;i--){if(heatRoll>=SHERIFF_EVENTS[i].minHeat){sheriffEvent=SHERIFF_EVENTS[i];break;}}
+  if(sheriffEvent){
+    log('🚨 '+sheriffEvent.text,'danger');
+    if(sheriffEvent.fine>0){G.cash=Math.max(0,G.cash-sheriffEvent.fine);log(`Strafe: -$${sheriffEvent.fine}`,'danger');}
+    if(sheriffEvent.shine>0){G.shine=Math.max(0,G.shine-sheriffEvent.shine);log(`${sheriffEvent.shine} Gal. konfisziert!`,'danger');}
+    if(sheriffEvent.jailDay){G.day+=sheriffEvent.jailDay;log(`${sheriffEvent.jailDay} Tage Knast!`,'danger');}
+  }
+  if(Math.random()<0.38){
+    const totalW=RANDOM_EVENTS.reduce((a,e)=>a+e.w,0);
+    let r=Math.random()*totalW;
+    for(const ev of RANDOM_EVENTS){r-=ev.w;if(r<=0){log(ev.fn(G),'warn');break;}}
+  }
+  generatePrices();
+  if(!fromTravel)log(`─── TAG ${G.day} — ${LOCATIONS[G.location].name} ───`,'normal');
+  renderAll();
+}
+
+function gameEnd(){
+  const loc=LOCATIONS[G.location];
+  const net=G.cash+G.shine*loc.baseSell;
+  let rating=net>10000?'🏆 APPALACHIAN LEGEND':net>5000?'⭐ King of the Holler':net>2000?'👍 Respektabler Bootlegger':'👶 Anfänger-Moonshiner';
+  showModal('══ 30 TAGE VORBEI ══',`Endkapital: $${G.cash}\nMoonshine: ${G.shine.toFixed(1)} Gal.\nGesamtvermögen: ~$${Math.round(net)}\n\nBewertung: ${rating}`,[
+    {label:'NOCHMAL SPIELEN',fn:()=>{
+      Object.assign(G,{cash:500,day:1,heat:5,location:0,inventory:{},mashFermenting:[],readyMash:[],shine:0,still:0,selectedRecipe:null});
+      ITEMS.forEach(it=>G.inventory[it.id]=0);
+      STILLS.forEach((s,i)=>s.unlocked=i===0);
+      marketPrices={};initGame();log('Neues Spiel!','warn');
+    }}
+  ]);
+}
+
+function showModal(title,text,buttons){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-text').innerHTML=text.replace(/\n/g,'<br>');
+  const btnsEl=document.getElementById('modal-btns');
+  btnsEl.innerHTML='';
+  buttons.forEach(b=>{
+    const btn=document.createElement('button');
+    btn.className='btn btn-action';btn.textContent=b.label;
+    btn.onclick=()=>{document.getElementById('modal').classList.remove('show');b.fn();};
+    btnsEl.appendChild(btn);
+  });
+  document.getElementById('modal').classList.add('show');
+}
+
+function switchTab(name,el){
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  el.classList.add('active');
+  renderAll();
+}
+
+initGame();
+</script>
+
+</body>
+</html>
