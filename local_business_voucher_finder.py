@@ -104,29 +104,30 @@ def parse_branch(branch):
 # Geocoding (Nominatim)
 # ---------------------------------------------------------------------------
 def geocode(city):
-    url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode({
-        "q": city, "format": "json", "limit": 1, "addressdetails": 1
-    })
-    status, data, _ = http_get(url)
-    if status != 200:
-        return None
-    try:
-        arr = json.loads(data.decode("utf-8", errors="replace"))
-    except Exception:
-        return None
-    if not arr:
-        return None
-    r = arr[0]
-    bbox = r.get("boundingbox")  # [south, north, west, east]
-    # Nominatim osm_type/id for area query
-    osm_type = r.get("osm_type")
-    osm_id = r.get("osm_id")
-    area_id = None
-    if osm_type == "relation":
-        area_id = int(osm_id) + 3600000000
-    elif osm_type == "way":
-        area_id = int(osm_id) + 2400000000
-    return {"bbox": bbox, "area_id": area_id, "display": r.get("display_name")}
+    queries = [city, city + ", Deutschland", city + ", Germany"]
+    for q in queries:
+        url = "https://nominatim.openstreetmap.org/search?" + urllib.parse.urlencode({
+            "q": q, "format": "json", "limit": 1, "addressdetails": 1
+        })
+        status, data, _ = http_get(url)
+        if status != 200:
+            continue
+        try:
+            arr = json.loads(data.decode("utf-8", errors="replace"))
+        except Exception:
+            continue
+        if arr:
+            r = arr[0]
+            bbox = r.get("boundingbox")
+            osm_type = r.get("osm_type")
+            osm_id = r.get("osm_id")
+            area_id = None
+            if osm_type == "relation":
+                area_id = int(osm_id) + 3600000000
+            elif osm_type == "way":
+                area_id = int(osm_id) + 2400000000
+            return {"bbox": bbox, "area_id": area_id, "display": r.get("display_name")}
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -162,7 +163,7 @@ def overpass_query(tags, geo, max_n):
                 else:
                     parts.append(f'{typ}{filt}{loc};')
     query = f"""
-[out:json][timeout:60];
+[out:json][timeout:25];
 {area_decl}
 (
   {' '.join(parts)}
@@ -175,16 +176,17 @@ out center {max_n};
         "https://overpass.kumi.systems/api/interpreter",
     ]
     last_err = None
-    for url in mirrors:
-        req = urllib.request.Request(url, data=query.encode("utf-8"), headers={
-            "User-Agent": USER_AGENT, "Content-Type": "application/x-www-form-urlencoded"
-        })
-        try:
-            with urllib.request.urlopen(req, timeout=90) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except Exception as e:
-            last_err = e
-            continue
+    for attempt in range(2):
+        for url in mirrors:
+            req = urllib.request.Request(url, data=query.encode("utf-8"), headers={
+                "User-Agent": USER_AGENT, "Content-Type": "application/x-www-form-urlencoded"
+            })
+            try:
+                with urllib.request.urlopen(req, timeout=60) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except Exception as e:
+                last_err = e
+                continue
     return {"error": str(last_err), "elements": []}
 
 
